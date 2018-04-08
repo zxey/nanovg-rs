@@ -590,11 +590,11 @@ impl<'a, 'b> Path<'a, 'b> {
     ///         pass variables that implement Paint trait
     ///         for now these are: Color, Gradient, ImagePattern
     /// 'options' specifies how filling should be done.
-    pub fn fill<T: Paint>(&self, paint: T, options: FillOptions) {
+    pub fn fill<T: AsRef<Paint>>(&self, paint: T, options: FillOptions) {
         let ctx = self.ctx();
         unsafe {
             ffi::nvgShapeAntiAlias(ctx, options.antialias as c_int);
-            paint.fill(self.context());
+            paint.as_ref().fill(self.context());
             ffi::nvgFill(ctx);
         }
     }
@@ -755,6 +755,12 @@ impl<'a, 'b> Path<'a, 'b> {
         }
     }
 }
+
+// impl AsRef<Color> for Color {
+//     fn as_ref(&self) -> &Color {
+//         self
+//     }
+// }
 
 /// Controls how filling in a path should look.
 #[derive(Debug)]
@@ -939,6 +945,12 @@ impl Paint for Color {
     }
 }
 
+impl<'a> AsRef<Paint + 'a> for Color {
+    fn as_ref<'b>(&'b self) -> &'b (Paint + 'a) {
+        self
+    }
+}
+
 impl Paint for Gradient {
     fn fill(&self, context: &Context) {
         let raw = self.create_raw();
@@ -952,6 +964,12 @@ impl Paint for Gradient {
         unsafe {
             ffi::nvgStrokePaint(context.raw(), raw);
         }
+    }
+}
+
+impl<'a> AsRef<Paint + 'a> for Gradient {
+    fn as_ref<'b>(&'b self) -> &'b (Paint + 'a) {
+        self
     }
 }
 
@@ -1085,6 +1103,12 @@ impl<'a> Paint for ImagePattern<'a> {
         unsafe {
             ffi::nvgStrokePaint(context.raw(), raw);
         }
+    }
+}
+
+impl<'a, 'c> AsRef<Paint + 'a + 'c> for ImagePattern<'c> {
+    fn as_ref<'b>(&'b self) -> &'b (Paint + 'a + 'c) {
+        unimplemented!()
     }
 }
 
